@@ -10,11 +10,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./Taks.css";
 import Moment from "moment";
 import constant from "../constant/constant";
-
-var data = [
-  { author: "Pete Hunt", text: "This is one comment" },
-  { author: "Jordan Walke", text: "This is *another* comment" },
-];
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 class Task extends Component {
   constructor(props) {
@@ -24,25 +21,71 @@ class Task extends Component {
       taskdescirption: "",
       taks_time: new Date(),
       taks_date: new Date(),
-      assignUser: "Ajithkumar",
+      assignUser: this.props.assigned_user_name,
       taskarray: [],
       btn_id: "add",
       id: "",
       hide_show: false,
+      assing_demo: "",
     };
   }
-   async componentDidMount (){
-  let loginsucess=await this.props.dispatch(LoginAction.userlogin());
-    if(loginsucess)
-    {
+  async componentDidMount() {
+    let loginsucess = await this.props.dispatch(LoginAction.userlogin());
+    if (loginsucess) {
       var tokens_id = this.props.token;
-      let getUserSuccess=await this.props.dispatch(LoginAction.getUser(tokens_id));
-      if(getUserSuccess)
-      {
-      this.getTask();
+      let getUserSuccess = await this.props.dispatch(
+        LoginAction.getUser(tokens_id)
+      );
+      if (getUserSuccess) {
+        this.getTask();
+        this.props.dispatch({ type: "SUCCESS_MESSAGE", message: "" });
+        // this.setState({assignUser: this.props.assigned_user_name});
+        // this.setState({taskarray: this.props.taskarray});
       }
     }
   }
+  componentDidUpdate = () => {
+    if (this.props.message === "ADD_SUCCESS") {
+      toast.success("Added Successfully");
+      this.getTask();
+      this.setState({
+        taskdescirption: "",
+        taks_time: new Date(),
+        taks_date: new Date(),
+        assignUser: this.props.assigned_user_name,
+        hide_show: false,
+      });
+      this.props.dispatch({ type: "SUCCESS_MESSAGE", message: "" });
+    } else if (this.props.message === "EDIT_SUCCESS") {
+      toast.success("Updated Successfully");
+      this.getTask();
+      this.setState({
+        taskdescirption: "",
+        taks_time: new Date(),
+        taks_date: new Date(),
+        assignUser: this.state.assigned_user_name,
+        id: "add",
+        hide_show: false,
+      });
+      this.props.dispatch({ type: "SUCCESS_MESSAGE", message: "" });
+    } else if (this.props.message === "DELETE_SUCCESS") {
+      toast.error("Deleted Successfully");
+      this.getTask();
+      this.setState({
+        taskdescirption: "",
+        taks_time: new Date(),
+        taks_date: new Date(),
+        assignUser: this.props.assigned_user_name,
+        id: "add",
+        hide_show: false,
+      });
+      this.props.dispatch({ type: "SUCCESS_MESSAGE", message: "" });
+    }
+  };
+
+  handlechangeAssign = (e) => {
+    this.setState({ assignUser: e.target.value });
+  };
 
   handlechange = (event) => {
     this.setState({ taskdescirption: event.target.value });
@@ -55,12 +98,7 @@ class Task extends Component {
     this.setState({ taks_time: date });
   };
 
-  assignFunction = (event) => {
-    const event_value = event.target.value.toString();
-    this.setState({ assignUser: event_value });
-  };
-
-  handleSubmit = (event) => {
+  handleSubmit = async (event) => {
     event.preventDefault();
     let {
       taskdescirption,
@@ -70,86 +108,40 @@ class Task extends Component {
       btn_id,
       id,
     } = this.state;
-
-   
+    assignUser = this.props.assigned_user_name;
     taks_date = Moment(taks_date).format("YYYY-MM-DD");
     taks_time = Moment(taks_time).format("ss") * 1;
     let time_zone = 15;
     let is_completed = 0;
 
     if (btn_id === "add") {
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + this.props.token,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assigned_user: assignUser,
-          task_date: taks_date,
-          task_time: taks_time,
-          time_zone: time_zone,
-          is_completed: is_completed,
-          task_msg: taskdescirption,
-        }),
-      };
-      fetch(
-        "https://stage.api.sloovi.com/task/lead_04412ba1d622466cab1f0ad941fcf303",
-        requestOptions
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          alert("Added Successfully");
-          this.getTask();
-          this.setState({
-            taskdescirption: "",
-            taks_time: new Date(),
-            taks_date: new Date(),
-            assignUser: "Ajithkumar",
-            hide_show: false,
-          });
-        });
+      const form_Data1 = JSON.stringify({
+        assigned_user: assignUser,
+        task_date: taks_date,
+        task_time: taks_time,
+        time_zone: time_zone,
+        is_completed: is_completed,
+        task_msg: taskdescirption,
+      });
+      var tokens_id = this.props.token;
+      let addsucces = await this.props.dispatch(
+        LoginAction.AddTaskAction(form_Data1, tokens_id)
+      );
     } else {
-      const requestOptions = {
-        method: "PUT",
-        headers: {
-          Authorization: "Bearer " + this.props.token,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assigned_user: assignUser,
-          task_date: taks_date,
-          task_time: taks_time,
-          time_zone: time_zone,
-          is_completed: is_completed,
-          task_msg: taskdescirption,
-        }),
-      };
-      fetch(
-        "https://stage.api.sloovi.com/task/lead_04412ba1d622466cab1f0ad941fcf303/" +
-          id,
-        requestOptions
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          alert("Update succesfully");
-          this.getTask();
-          this.setState({
-            taskdescirption: "",
-            taks_time: new Date(),
-            taks_date: new Date(),
-            assignUser: "Ajithkumar",
-            id: "add",
-            hide_show: false,
-          });
-        });
+      const form_Data2 = JSON.stringify({
+        assigned_user: assignUser,
+        task_date: taks_date,
+        task_time: taks_time,
+        time_zone: time_zone,
+        is_completed: is_completed,
+        task_msg: taskdescirption,
+      });
+      var tokens_id1 = this.props.token;
+      let edit_success = await this.props.dispatch(
+        LoginAction.EditTaskAction(form_Data2, tokens_id1, id)
+      );
     }
   };
-
- 
-
 
   getTask = () => {
     const requestOptions = {
@@ -167,13 +159,9 @@ class Task extends Component {
       .then((response) => response.json())
       .then((data) => {
         this.setState({ taskarray: data.results });
+        console.log(data.results);
       });
   };
-
-
- 
-
-
 
   getTask_single = (id) => {
     this.setState({ btn_id: "update", id: id });
@@ -207,44 +195,23 @@ class Task extends Component {
       });
   };
 
-
-  getdeletetask = (id) => {
-    const requestOptions = {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + this.props.token,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    };
-    fetch(
-      "https://stage.api.sloovi.com/task/lead_04412ba1d622466cab1f0ad941fcf303/" +
-        id,
-      requestOptions
-    )
-      .then((response) => response.json())
-
-      .then((data) => {
-        {
-          alert("delete success");
-          this.getTask();
-
-
-        }
-      });
-  };
-
-  hide_and_show = () => {
-    this.setState({ hide_show: true });
+  getdeletetask = async (id) => {
+    var deletetoken = this.props.token;
+    let deletesuccess = await this.props.dispatch(
+      LoginAction.DeleteTaskAction(deletetoken, id)
+    );
   };
 
   render() {
+    const { hide_show } = this.state;
+
     return (
       <section className="mt-5">
+        <ToastContainer position="top-right" autoClose={2000} />
         <Container>
           <Row>
             <Col md={12} className="text-center">
-              <h5>Task Management</h5>
+              <h5 className="task-management-heading"> Task Management</h5>
             </Col>
           </Row>
 
@@ -255,10 +222,12 @@ class Task extends Component {
                   <h6>Add Taks</h6>
                 </div>
 
-                <div>
+                <div className="icon-wrapper-background">
                   <i
-                    onClick={this.hide_and_show}
-                    className="fa fa-plus"
+                    onClick={() => this.setState({ hide_show: !hide_show })}
+                    className={
+                      !this.state.hide_show ? "fa fa-plus" : "fa fa-minus"
+                    }
                     aria-hidden="true"
                   ></i>
                 </div>
@@ -308,19 +277,18 @@ class Task extends Component {
                     </Col>
                   </Row>
                   <Row>
-                    <Form.Group as={Col} controlId="formGridState">
-                      <Form.Label>Assign User</Form.Label>
-                      <Form.Control
-                        as="select"
-                        as="select"
-                        value={this.state.assignUser}
-                        onChange={this.assignFunction}
-                      >
-                        <option value="Ajithkumar">Ajith Kumar</option>
-                        <option value="Vijay">Vijay</option>
-                        <option value="Kamal">Kamal</option>
-                      </Form.Control>
-                    </Form.Group>
+                    <Col md={12} className="pt-2">
+                      <Form.Group controlId="formBasicEmail">
+                        <Form.Label>Assigned User</Form.Label>
+                        <Form.Control
+                          name="assignUser"
+                          value={this.state.assignUser}
+                          onChange={this.handlechangeAssign}
+                          type="text"
+                          placeholder="Assigned User"
+                        />
+                      </Form.Group>
+                    </Col>
                   </Row>
 
                   <Row>
@@ -357,7 +325,7 @@ class Task extends Component {
                 <tbody>
                   {this.state.taskarray.map((item, id) => {
                     return (
-                      <tr>
+                      <tr key={id}>
                         <td>{id + 1}</td>
                         <td>{item.assigned_user}</td>
                         <td>{item.task_date}</td>
@@ -368,7 +336,7 @@ class Task extends Component {
                             onClick={() => {
                               this.getTask_single(item.id);
                             }}
-                            class="fa fa-edit"
+                            className="fa fa-edit"
                             aria-hidden="true"
                           ></i>
                         </td>
@@ -377,7 +345,7 @@ class Task extends Component {
                             onClick={() => {
                               this.getdeletetask(item.id);
                             }}
-                            class="fa fa-trash"
+                            className="fa fa-trash"
                             aria-hidden="true"
                           ></i>
                         </td>
@@ -396,9 +364,10 @@ class Task extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    token: state.Login.token,
-    taskarray: state.Login.taskarray,
-    deleteTask: state.Login.deleteTask,
+    token: state.token,
+    taskarray: state.taskarray,
+    assigned_user_name: state.assigned_user_name,
+    message: state.message,
   };
 };
 export default connect(mapStateToProps, null)(Task);

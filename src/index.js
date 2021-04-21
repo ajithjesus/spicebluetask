@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 
 import {Provider} from 'react-redux';
 
-import Login from './redux/reducer/Task';
+import TaskReducer from './redux/reducer/Task';
 import * as redux from "redux";
 import thunk from 'redux-thunk';
 import { composeWithDevTools } from 'redux-devtools-extension';
@@ -14,17 +14,17 @@ import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage';
 import { PersistGate } from 'redux-persist/integration/react';
 
-const rootReducer = redux.combineReducers({
-  Login :Login,
+// const rootReducer = redux.combineReducers({
+//   Login :Login,
 
  
- });
+//  });
 
  const persistConfig = {
   key: 'root',
   storage,
 }
-const persistedReducer = persistReducer(persistConfig, rootReducer)
+const persistedReducer = persistReducer(persistConfig, TaskReducer)
 
 const store = redux.createStore(persistedReducer,composeWithDevTools(redux.applyMiddleware(thunk)));
 
